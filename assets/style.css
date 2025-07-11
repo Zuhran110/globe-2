@@ -46,13 +46,23 @@ body {
     margin-bottom: 30px;
     border: 1px solid #E0E0E0; /* Lighter border for the container */
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
 }
 
 #globeViz {
     width: 100%;
-    height: 600px;
+    height: 60vh;
+    min-height: 300px;
+    max-height: 80vh;
     border-radius: 10px;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Controls */
@@ -181,7 +191,9 @@ body {
     }
     
     #globeViz {
-        height: 400px;
+        height: 40vh;
+        min-height: 200px;
+        max-height: 60vh;
     }
     
     .controls {
@@ -191,6 +203,10 @@ body {
     
     .control-btn {
         width: 200px;
+    }
+    .globe-container {
+        min-height: 40vh;
+        padding: 10px;
     }
 }
 

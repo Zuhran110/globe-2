@@ -143,11 +143,27 @@ class WinnerGlobe {
                     .enablePointerInteraction(true);
             }
 
+            // Responsive altitude based on window size
+            const getResponsiveAltitude = () => {
+                if (window.innerWidth < 500) return 3.2;
+                if (window.innerWidth < 900) return 2.5;
+                return 2.0;
+            };
+
             // Set initial view to center on US
             this.globe.pointOfView({
                 lat: 39.8283,
                 lng: -98.5795,
-                altitude: 2.0
+                altitude: getResponsiveAltitude()
+            });
+
+            // Update zoom on resize
+            window.addEventListener('resize', () => {
+                this.globe.pointOfView({
+                    lat: 39.8283,
+                    lng: -98.5795,
+                    altitude: getResponsiveAltitude()
+                });
             });
 
             // Start pin animation loop
@@ -382,14 +398,18 @@ class WinnerGlobe {
 
     resetView() {
         if (!this.globe) return;
-        
+        // Responsive altitude based on window size
+        const getResponsiveAltitude = () => {
+            if (window.innerWidth < 500) return 3.2;
+            if (window.innerWidth < 900) return 2.5;
+            return 2.0;
+        };
         // Reset to US view
         this.globe.pointOfView({
             lat: 39.8283,
             lng: -98.5795,
-            altitude: 2
+            altitude: getResponsiveAltitude()
         }, 1000);
-        
         // Clear winner details
         this.clearWinnerDetails();
     }
