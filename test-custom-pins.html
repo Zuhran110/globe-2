@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom 3D Pins Test - Globe Visualization</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .globe-container {
+            position: relative;
+            height: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #globeViz {
+            width: 100%;
+            height: 100%;
+        }
+        .controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .control-btn {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .info-panel {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .pin-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .pin-type {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            text-align: center;
+        }
+        .keyboard-shortcuts {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .shortcut {
+            display: inline-block;
+            margin: 5px 10px;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Custom 3D Map Pins Demo</h1>
+            <p>Interactive globe with custom 3D pin models instead of blue dots</p>
+        </header>
+        
+        <div class="globe-container">
+            <div id="globeViz"></div>
+            
+            <div class="controls">
+                <button id="autoRotate" class="control-btn">Toggle Auto-Rotate (R)</button>
+                <button id="animatePins" class="control-btn">Animate Pins (A)</button>
+                <button id="changePinStyle" class="control-btn">Change Pin Style (P)</button>
+                <button id="resetView" class="control-btn">Reset View (Esc)</button>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h3>Custom 3D Pin Features</h3>
+            <div class="pin-info">
+                <div class="pin-type">
+                    <strong>Default Pin</strong><br>
+                    Classic map pin with blue color
+                </div>
+                <div class="pin-type">
+                    <strong>Star Pin</strong><br>
+                    ️⭐ Science category winners
+                </div>
+                <div class="pin-type">
+                    <strong>Flag Pin</strong><br>
+                    🏁 Literature category winners
+                </div>
+                <div class="pin-type">
+                    <strong>Trophy Pin</strong><br>
+                    🏆 Peace category winners
+                </div>
+            </div>
+        </div>
+
+        <div class="keyboard-shortcuts">
+            <h3>Keyboard Shortcuts</h3>
+            <div>
+                <span class="shortcut">R</span> Toggle Auto-Rotate
+                <span class="shortcut">A</span> Animate Pins
+                <span class="shortcut">P</span> Change Pin Style
+                <span class="shortcut">Esc</span> Reset View
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Three.js and Globe.gl from local files -->
+    <script src="assets/three.min.js"></script>
+    <script src="assets/globe.gl.min.js"></script>
+    <script src="assets/custom-pin.js"></script>
+    <script>
+        // Test data for demonstration
+        const testData = [
+            { name: "John Smith", city: "New York", state: "NY", lat: 40.7128, lng: -74.0060, year: 2023, prize: "$10,000", category: "science" },
+            { name: "Jane Doe", city: "Los Angeles", state: "CA", lat: 34.0522, lng: -118.2437, year: 2023, prize: "$8,000", category: "literature" },
+            { name: "Bob Johnson", city: "Chicago", state: "IL", lat: 41.8781, lng: -87.6298, year: 2023, prize: "$12,000", category: "peace" },
+            { name: "Alice Brown", city: "Houston", state: "TX", lat: 29.7604, lng: -95.3698, year: 2023, prize: "$9,000", category: "science" },
+            { name: "Charlie Wilson", city: "Phoenix", state: "AZ", lat: 33.4484, lng: -112.0740, year: 2023, prize: "$7,000", category: "literature" }
+        ];
+
+        // Simple test globe with custom pins
+        class TestGlobe {
+            constructor() {
+                this.globe = null;
+                this.pinFactory = new CustomMapPin();
+                this.init();
+            }
+
+            init() {
+                const globeContainer = document.getElementById('globeViz');
+                
+                // Create custom objects data with 3D pins
+                const customObjectsData = testData.map(winner => ({
+                    ...winner,
+                    customObject: this.createCustomPin(winner)
+                }));
+
+                this.globe = Globe()
+                    (globeContainer)
+                    .backgroundColor('#1a1a2e')
+                    .globeMaterial(new THREE.MeshPhongMaterial({ color: '#16213e' }))
+                    .objectsData(customObjectsData)
+                    .objectLat(d => d.lat)
+                    .objectLng(d => d.lng)
+                    .objectAltitude(0.03)
+                    .objectLabel(d => this.getPointLabel(d))
+                    .onObjectClick(this.onPointClick.bind(this))
+                    .onObjectHover(this.onPointHover.bind(this))
+                    .enablePointerInteraction(true);
+
+                // Set initial view
+                this.globe.pointOfView({
+                    lat: 39.8283,
+                    lng: -98.5795,
+                    altitude: 2.0
+                });
+
+                this.setupEventListeners();
+            }
+
+            createCustomPin(winner) {
+                let pinStyle = 'default';
+                let pinColor = '#4285F4';
+                
+                if (winner.category) {
+                    switch(winner.category.toLowerCase()) {
+                        case 'science':
+                            pinStyle = 'star';
+                            pinColor = '#4CAF50';
+                            break;
+                        case 'literature':
+                            pinStyle = 'flag';
+                            pinColor = '#2196F3';
+                            break;
+                        case 'peace':
+                            pinStyle = 'trophy';
+                            pinColor = '#FFD700';
+                            break;
+                    }
+                }
+                
+                return this.pinFactory.createPinStyle(pinStyle, pinColor);
+            }
+
+            getPointLabel(winner) {
+                return `
+                    <div style="background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; color: white; font-size: 12px; max-width: 200px;">
+                        <strong>${winner.name}</strong><br/>
+                        ${winner.city}, ${winner.state}<br/>
+                        ${winner.year} - ${winner.prize}<br/>
+                        Category: ${winner.category}
+                    </div>
+                `;
+            }
+
+            onPointClick(point) {
+                if (point) {
+                    console.log('Clicked:', point);
+                    this.globe.pointOfView({
+                        lat: point.lat,
+                        lng: point.lng,
+                        altitude: 1.5
+                    }, 1000);
+                }
+            }
+
+            onPointHover(point) {
+                if (point) {
+                    console.log('Hovered:', point.name);
+                }
+            }
+
+            setupEventListeners() {
+                document.getElementById('autoRotate').addEventListener('click', () => {
+                    this.globe.controls().autoRotate = !this.globe.controls().autoRotate;
+                });
+
+                document.getElementById('changePinStyle').addEventListener('click', () => {
+                    this.changePinStyle();
+                });
+
+                document.getElementById('resetView').addEventListener('click', () => {
+                    this.globe.pointOfView({
+                        lat: 39.8283,
+                        lng: -98.5795,
+                        altitude: 2
+                    }, 1000);
+                });
+            }
+
+            changePinStyle() {
+                const styles = ['default', 'star', 'flag', 'trophy'];
+                const colors = ['#4285F4', '#4CAF50', '#2196F3', '#FFD700'];
+                
+                const objects = this.globe.objectsData();
+                if (objects) {
+                    objects.forEach((obj, index) => {
+                        const styleIndex = Math.floor(Math.random() * styles.length);
+                        const newPin = this.pinFactory.createPinStyle(styles[styleIndex], colors[styleIndex]);
+                        obj.customObject = newPin;
+                    });
+                    
+                    this.globe.objectsData(objects);
+                }
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            if (typeof THREE !== 'undefined' && typeof Globe !== 'undefined' && typeof CustomMapPin !== 'undefined') {
+                new TestGlobe();
+            } else {
+                document.getElementById('globeViz').innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white;">
+                        <p>Loading libraries...</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html> 

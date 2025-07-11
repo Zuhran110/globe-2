@@ -6,6 +6,9 @@ class WinnerGlobe {
         this.isAutoRotating = false;
         this.animationSpeed = 0.5;
         this.currentIndex = 0;
+        this.pinFactory = null;
+        this.animationId = null;
+        this.startTime = Date.now();
         
         this.init();
     }
@@ -73,31 +76,6 @@ class WinnerGlobe {
         }
     }
 
-    getSampleData() {
-        return [
-            {
-                "name": "John Doe",
-                "city": "Dallas",
-                "state": "TX",
-                "lat": 32.7767,
-                "lng": -96.7970,
-                "year": 2023,
-                "prize": "$50,000",
-                "category": "Innovation"
-            },
-            {
-                "name": "Jane Smith",
-                "city": "Denver",
-                "state": "CO",
-                "lat": 39.7392,
-                "lng": -104.9903,
-                "year": 2023,
-                "prize": "$25,000",
-                "category": "Community Impact"
-            }
-        ];
-    }
-
     initGlobe() {
         Promise.all([
             fetch('https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson').then(res => res.json()),
@@ -105,24 +83,65 @@ class WinnerGlobe {
         ]).then(([countries, states]) => {
             const globeContainer = document.getElementById('globeViz');
 
-            this.globe = Globe()
-                (globeContainer)
-                .backgroundColor('#FFFFFF')
-                .globeMaterial(new THREE.MeshPhongMaterial({ color: '#F5F5F5' }))
-                .polygonsData([...countries.features, ...states.features])
-                .polygonCapColor(feat => feat.properties.hasOwnProperty('name') ? 'rgba(0, 0, 0, 0)' : '#B41F27')
-                .polygonSideColor(() => '#000000')
-                .polygonAltitude(feat => feat.properties.hasOwnProperty('name') ? 0.006 : 0.005)
-                .pointsData(this.winnersData.filter(d => d.state))
-                .pointLat(d => d.lat)
-                .pointLng(d => d.lng)
-                .pointColor(d => this.getPointColor(d))
-                .pointAltitude(0.03)
-                .pointRadius(1.5)
-                .pointLabel(d => this.getPointLabel(d))
-                .onPointClick(this.onPointClick.bind(this))
-                .onPointHover(this.onPointHover.bind(this))
-                .enablePointerInteraction(true);
+            // Initialize custom pin factory
+            this.pinFactory = new CustomMapPin();
+            console.log('Custom pin factory initialized:', this.pinFactory);
+            
+            // Create custom objects data with 3D pins
+            const customObjectsData = this.winnersData.filter(d => d.state).map(winner => {
+                const customPin = this.createCustomPin(winner);
+                console.log('Created pin for', winner.name, ':', customPin);
+                return {
+                    ...winner,
+                    customObject: customPin
+                };
+            });
+
+            console.log('Custom objects data:', customObjectsData);
+
+            // Try custom objects first, fallback to points if needed
+            try {
+                this.globe = Globe()
+                    (globeContainer)
+                    .backgroundColor('#FFFFFF')
+                    .globeMaterial(new THREE.MeshPhongMaterial({ color: '#F5F5F5' }))
+                    .polygonsData([...countries.features, ...states.features])
+                    .polygonCapColor(feat => feat.properties.hasOwnProperty('name') ? 'rgba(0, 0, 0, 0)' : '#B41F27')
+                    .polygonSideColor(() => '#000000')
+                    .polygonAltitude(feat => feat.properties.hasOwnProperty('name') ? 0.006 : 0.005)
+                    .objectsData(customObjectsData)
+                    .objectLat(d => d.lat)
+                    .objectLng(d => d.lng)
+                    .objectAltitude(0.03)
+                    .objectLabel(d => this.getPointLabel(d))
+                    .onObjectClick(this.onPointClick.bind(this))
+                    .onObjectHover(this.onPointHover.bind(this))
+                    .enablePointerInteraction(true);
+                
+                console.log('Using custom objects for pins');
+            } catch (error) {
+                console.log('Custom objects failed, falling back to points:', error);
+                
+                // Fallback to points with custom colors
+                this.globe = Globe()
+                    (globeContainer)
+                    .backgroundColor('#FFFFFF')
+                    .globeMaterial(new THREE.MeshPhongMaterial({ color: '#F5F5F5' }))
+                    .polygonsData([...countries.features, ...states.features])
+                    .polygonCapColor(feat => feat.properties.hasOwnProperty('name') ? 'rgba(0, 0, 0, 0)' : '#B41F27')
+                    .polygonSideColor(() => '#000000')
+                    .polygonAltitude(feat => feat.properties.hasOwnProperty('name') ? 0.006 : 0.005)
+                    .pointsData(this.winnersData.filter(d => d.state))
+                    .pointLat(d => d.lat)
+                    .pointLng(d => d.lng)
+                    .pointColor(d => this.getPointColor(d))
+                    .pointAltitude(0.03)
+                    .pointRadius(3.0) // Make points larger and more visible
+                    .pointLabel(d => this.getPointLabel(d))
+                    .onPointClick(this.onPointClick.bind(this))
+                    .onPointHover(this.onPointHover.bind(this))
+                    .enablePointerInteraction(true);
+            }
 
             // Set initial view to center on US
             this.globe.pointOfView({
@@ -130,12 +149,68 @@ class WinnerGlobe {
                 lng: -98.5795,
                 altitude: 2.0
             });
+
+            // Start pin animation loop
+            this.startPinAnimation();
         }).catch(err => console.error('Error loading geographic data:', err));
     }
 
+    createCustomPin(winner) {
+        // Create different pin styles based on winner data
+        let pinStyle = 'default';
+        let pinColor = '#4285F4';
+        
+        // You can customize pin style based on winner properties
+        if (winner.category) {
+            switch(winner.category.toLowerCase()) {
+                case 'innovation':
+                    pinStyle = 'star';
+                    pinColor = '#4CAF50';
+                    break;
+                case 'community impact':
+                    pinStyle = 'flag';
+                    pinColor = '#2196F3';
+                    break;
+                case 'leadership':
+                    pinStyle = 'trophy';
+                    pinColor = '#FFD700';
+                    break;
+                case 'excellence':
+                    pinStyle = 'star';
+                    pinColor = '#9C27B0';
+                    break;
+                default:
+                    pinStyle = 'default';
+                    pinColor = '#4285F4';
+            }
+        }
+        
+        console.log('Creating pin with style:', pinStyle, 'color:', pinColor, 'for winner:', winner.name);
+        
+        // Create the pin with custom style and color
+        const pin = this.pinFactory.createPinStyle(pinStyle, pinColor);
+        console.log('Pin created:', pin);
+        
+        return pin;
+    }
+
     getPointColor(winner) {
-        // Change point color to blue similar to Google Maps indication
-        return '#4285F4';
+        // Return different colors based on category
+        if (winner.category) {
+            switch(winner.category.toLowerCase()) {
+                case 'innovation':
+                    return '#4CAF50'; // Green
+                case 'community impact':
+                    return '#2196F3'; // Blue
+                case 'leadership':
+                    return '#FFD700'; // Gold
+                case 'excellence':
+                    return '#9C27B0'; // Purple
+                default:
+                    return '#4285F4'; // Default blue
+            }
+        }
+        return '#4285F4'; // Default blue
     }
 
     getPointLabel(winner) {
@@ -197,6 +272,35 @@ class WinnerGlobe {
         panel.innerHTML = '<p>Hover over a pin to see winner details</p>';
     }
 
+    startPinAnimation() {
+        if (!this.globe || !this.pinFactory) return;
+        
+        const animate = () => {
+            const time = (Date.now() - this.startTime) * 0.001;
+            
+            // Get all objects from the globe
+            const objects = this.globe.objectsData();
+            if (objects) {
+                objects.forEach(obj => {
+                    if (obj.customObject && obj.customObject.userData) {
+                        this.pinFactory.updateAnimation(obj.customObject, time);
+                    }
+                });
+            }
+            
+            this.animationId = requestAnimationFrame(animate);
+        };
+        
+        animate();
+    }
+
+    stopPinAnimation() {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
+    }
+
     setupEventListeners() {
         // Auto-rotate toggle
         document.getElementById('autoRotate').addEventListener('click', () => {
@@ -211,6 +315,11 @@ class WinnerGlobe {
         // Reset view
         document.getElementById('resetView').addEventListener('click', () => {
             this.resetView();
+        });
+
+        // Change pin style
+        document.getElementById('changePinStyle').addEventListener('click', () => {
+            this.changePinStyle();
         });
     }
 
@@ -285,6 +394,34 @@ class WinnerGlobe {
         this.clearWinnerDetails();
     }
 
+    // Cleanup method to stop animations
+    cleanup() {
+        this.stopPinAnimation();
+        this.stopAutoRotate();
+    }
+
+    changePinStyle() {
+        if (!this.globe || !this.pinFactory) return;
+        
+        // Cycle through different pin styles
+        const styles = ['default', 'star', 'flag', 'trophy'];
+        const colors = ['#4285F4', '#4CAF50', '#2196F3', '#FFD700', '#9C27B0'];
+        
+        // Get current objects and update them
+        const objects = this.globe.objectsData();
+        if (objects) {
+            objects.forEach((obj, index) => {
+                const styleIndex = Math.floor(Math.random() * styles.length);
+                const colorIndex = Math.floor(Math.random() * colors.length);
+                const newPin = this.pinFactory.createPinStyle(styles[styleIndex], colors[colorIndex]);
+                obj.customObject = newPin;
+            });
+            
+            // Refresh the globe to show new pins
+            this.globe.objectsData(objects);
+        }
+    }
+
     updateStats() {
         // Update total winners
         document.getElementById('totalWinners').textContent = this.winnersData.length;
@@ -345,6 +482,10 @@ document.addEventListener('keydown', (e) => {
         case 'a':
         case 'A':
             document.getElementById('animatePins').click();
+            break;
+        case 'p':
+        case 'P':
+            document.getElementById('changePinStyle').click();
             break;
         case 'Escape':
             document.getElementById('resetView').click();

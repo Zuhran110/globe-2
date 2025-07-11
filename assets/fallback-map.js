@@ -50,31 +50,6 @@ class FallbackMap {
         }
     }
 
-    getSampleData() {
-        return [
-            {
-                "name": "John Doe",
-                "city": "Dallas",
-                "state": "TX",
-                "lat": 32.7767,
-                "lng": -96.7970,
-                "year": 2023,
-                "prize": "$50,000",
-                "category": "Innovation"
-            },
-            {
-                "name": "Jane Smith",
-                "city": "Denver",
-                "state": "CO",
-                "lat": 39.7392,
-                "lng": -104.9903,
-                "year": 2023,
-                "prize": "$25,000",
-                "category": "Community Impact"
-            }
-        ];
-    }
-
     initMap() {
         const mapContainer = document.getElementById('globeViz');
         mapContainer.innerHTML = `
