@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Previous Winners - Interactive Globe</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Previous Winners</h1>
+            <p>Interactive 3D globe showing winners across the United States</p>
+        </header>
+        
+        <div class="globe-container">
+            <div id="globeViz"></div>
+            
+            <div class="controls">
+                <button id="autoRotate" class="control-btn">Toggle Auto-Rotate</button>
+                <button id="animatePins" class="control-btn">Animate Pins</button>
+                <button id="resetView" class="control-btn">Reset View</button>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h3>Winner Information</h3>
+            <div id="selectedWinner">
+                <p>Hover over a pin to see winner details</p>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-number" id="totalWinners">0</span>
+                <span class="stat-label">Total Winners</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="totalStates">0</span>
+                <span class="stat-label">States Represented</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Three.js and Globe.gl from local files -->
+    <script src="assets/three.min.js"></script>
+    <script src="assets/globe.gl.min.js"></script>
+    <script>
+        // Wait for libraries to load before initializing
+        window.addEventListener('load', function() {
+                         if (typeof THREE === 'undefined' || typeof Globe === 'undefined') {
+                 console.error('Required libraries not loaded, switching to fallback mode');
+                 // Load fallback map instead
+                 const fallbackScript = document.createElement('script');
+                 fallbackScript.src = 'assets/fallback-map.js';
+                 fallbackScript.onload = function() {
+                     window.fallbackMap = new FallbackMap();
+                 };
+                 fallbackScript.onerror = function() {
+                     document.getElementById('globeViz').innerHTML = `
+                         <div class="loading">
+                             <p style="color: #ff6b6b;">Failed to load map components. Please check your internet connection and try again.</p>
+                             <button onclick="location.reload()" style="margin-top: 10px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">Retry</button>
+                         </div>
+                     `;
+                 };
+                 document.body.appendChild(fallbackScript);
+                 return;
+             }
+            // Load our globe script after libraries are confirmed loaded
+            const script = document.createElement('script');
+            script.src = 'assets/globe.js';
+            script.onerror = function() {
+                document.getElementById('globeViz').innerHTML = `
+                    <div class="loading">
+                        <p style="color: #ff6b6b;">Failed to load globe script. Please try again.</p>
+                        <button onclick="location.reload()" style="margin-top: 10px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">Retry</button>
+                    </div>
+                `;
+            };
+            document.body.appendChild(script);
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,12 @@
+[
+  {
+    "name": "John Doe",
+    "city": "Dallas",
+    "state": "TX",
+    "lat": 32.7767,
+    "lng": -96.7970,
+    "year": 2023,
+    "prize": "$50,000",
+    "category": "Innovation"
+  }
+] 
