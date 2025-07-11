@@ -116,9 +116,9 @@ class WinnerGlobe {
                 .pointsData(this.winnersData.filter(d => d.state))
                 .pointLat(d => d.lat)
                 .pointLng(d => d.lng)
-                .pointColor(() => '#000000')
-                .pointAltitude(0.015)
-                .pointRadius(0.8)
+                .pointColor(d => this.getPointColor(d))
+                .pointAltitude(0.03)
+                .pointRadius(1.5)
                 .pointLabel(d => this.getPointLabel(d))
                 .onPointClick(this.onPointClick.bind(this))
                 .onPointHover(this.onPointHover.bind(this))
@@ -134,8 +134,8 @@ class WinnerGlobe {
     }
 
     getPointColor(winner) {
-        // All points are now black
-        return '#000000';
+        // Change point color to blue similar to Google Maps indication
+        return '#4285F4';
     }
 
     getPointLabel(winner) {
@@ -353,4 +353,4 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Export for potential use in other scripts
-window.WinnerGlobe = WinnerGlobe; 
+window.WinnerGlobe = WinnerGlobe;

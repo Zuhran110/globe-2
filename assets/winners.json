@@ -8,5 +8,75 @@
     "year": 2023,
     "prize": "$50,000",
     "category": "Innovation"
+  },
+  {
+    "name": "Jane Smith",
+    "city": "Denver",
+    "state": "CO",
+    "lat": 39.7392,
+    "lng": -104.9903,
+    "year": 2022,
+    "prize": "$25,000",
+    "category": "Community Impact"
+  },
+  {
+    "name": "Michael Johnson",
+    "city": "New York",
+    "state": "NY",
+    "lat": 40.7128,
+    "lng": -74.0060,
+    "year": 2021,
+    "prize": "$30,000",
+    "category": "Leadership"
+  },
+  {
+    "name": "Emily Davis",
+    "city": "San Francisco",
+    "state": "CA",
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "year": 2023,
+    "prize": "$40,000",
+    "category": "Excellence"
+  },
+  {
+    "name": "William Brown",
+    "city": "Chicago",
+    "state": "IL",
+    "lat": 41.8781,
+    "lng": -87.6298,
+    "year": 2020,
+    "prize": "$20,000",
+    "category": "Innovation"
+  },
+  {
+    "name": "Olivia Wilson",
+    "city": "Miami",
+    "state": "FL",
+    "lat": 25.7617,
+    "lng": -80.1918,
+    "year": 2022,
+    "prize": "$35,000",
+    "category": "Community Impact"
+  },
+  {
+    "name": "James Taylor",
+    "city": "Seattle",
+    "state": "WA",
+    "lat": 47.6062,
+    "lng": -122.3321,
+    "year": 2021,
+    "prize": "$28,000",
+    "category": "Leadership"
+  },
+  {
+    "name": "Sophia Martinez",
+    "city": "Boston",
+    "state": "MA",
+    "lat": 42.3601,
+    "lng": -71.0589,
+    "year": 2023,
+    "prize": "$45,000",
+    "category": "Excellence"
   }
-] 
+]
